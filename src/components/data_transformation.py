@@ -1,6 +1,5 @@
-import sys
 import os
-
+import sys
 from dataclasses import dataclass
 
 import numpy as np
@@ -29,11 +28,8 @@ class DataTransformation:
         self.data_transformation_config = DataTransformationConfig()
 
     def get_data_transformer_object(self):
-        """
-        This function is responsible for data transformation
-        """
-
         try:
+
             numerical_columns = [
                 "writing_score",
                 "reading_score"
@@ -71,7 +67,7 @@ class DataTransformation:
             )
 
             preprocessor = ColumnTransformer(
-                [
+                transformers=[
                     ("num_pipeline", num_pipeline, numerical_columns),
                     ("cat_pipeline", cat_pipeline, categorical_columns)
                 ]
@@ -89,8 +85,28 @@ class DataTransformation:
     ):
 
         try:
+
             train_df = pd.read_csv(train_path)
             test_df = pd.read_csv(test_path)
+
+            train_df.columns = (
+                train_df.columns
+                .str.strip()
+                .str.lower()
+                .str.replace(" ", "_", regex=False)
+                .str.replace("/", "_", regex=False)
+            )
+
+            test_df.columns = (
+                test_df.columns
+                .str.strip()
+                .str.lower()
+                .str.replace(" ", "_", regex=False)
+                .str.replace("/", "_", regex=False)
+            )
+
+            print("TRAIN COLUMNS:", train_df.columns.tolist())
+            print("TEST COLUMNS:", test_df.columns.tolist())
 
             logging.info(
                 "Read train and test data completed"
@@ -105,6 +121,27 @@ class DataTransformation:
             )
 
             target_column_name = "math_score"
+
+            required_columns = [
+                "gender",
+                "race_ethnicity",
+                "parental_level_of_education",
+                "lunch",
+                "test_preparation_course",
+                "math_score",
+                "reading_score",
+                "writing_score"
+            ]
+
+            missing_columns = [
+                col for col in required_columns
+                if col not in train_df.columns
+            ]
+
+            if len(missing_columns) > 0:
+                raise Exception(
+                    f"Missing columns: {missing_columns}"
+                )
 
             input_feature_train_df = train_df.drop(
                 columns=[target_column_name],
